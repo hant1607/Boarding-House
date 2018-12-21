@@ -1,53 +1,33 @@
 language: java
-jdk:
-- oraclejdk10
-before_cache:
-- rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
-cache:
-  directories:
-  - $HOME/.m2
-  - $HOME/.gradle/caches/
-  - $HOME/.gradle/wrapper/
+dist: trusty
+sudo: false
 
-before_install:
-  - wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
-  - sed -i.bak -e 's|https://nexus.codehaus.org/snapshots/|https://oss.sonatype.org/content/repositories/codehaus-snapshots/|g' ~/.m2/settings.xml
+- wget https://github.com/sormuras/bach/raw/master/install-jdk.sh
+
 matrix:
   include:
   - env: JDK='Oracle JDK 10'
       install: . ./install-jdk.sh -F 10 -L BCL
   - env: JDK='OpenJDK 10'
       install: . ./install-jdk.sh -F 10 -L GPL
+   script:
+   - ./gradlew --version
+   - ./gradlew test
+  
+jdk: oraclejdk10
+
+./mvnw install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+
+install: true
+script: ./mvnw clean install
+
+
+cache:
+  directories:
+  - $HOME/.m2
 
 script:
-- ./gradlew --version
-- ./gradlew check
-- ./gradlew install -x check
-- ./gradlew codeCoverageReport --continue
-- ./gradlew test
-
-after_success:
-- bash <(curl -s https://codecov.io/bash)
-
-deploy:
-- provider: script
-  script: scripts/deploy.sh
-  skip_cleanup: true
-  on:
-    repo: hant1607/Boarding-House
-    jdk: oraclejdk10
-    tags: true
-
-- provider: releases
-  api_key: ${GITHUB_TOKEN}
-  file: build/libs/watson-spring-boot-starter-${TRAVIS_BRANCH:1}-jar-with-dependencies.jar
-  skip_cleanup: true
-  on:
-    repo: hant1607/Boarding-House
-    jdk: oraclejdk10
-    tags: true
-
-notifications:
-  email: true
+  - ./mvnw clean install
+  - bash <(curl -s https://codecov.io/bash)
+ 
